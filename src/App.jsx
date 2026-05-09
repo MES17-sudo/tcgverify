@@ -17,7 +17,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ─── TIER CONFIG ─── */
 const TIERS = {
-  free:     { label:"Free",     limit:3,   price:null,     period:null,    desc:"3 scans to try" },
+  free:     { label:"Free",     limit:100,   price:null,     period:null,    desc:"3 scans to try" },
   starter:  { label:"Starter",  limit:50,  price:"£3.99",  period:"month", desc:"50 scans / month" },
   pro:      { label:"Pro",      limit:200, price:"£7.99",  period:"month", desc:"200 scans / month" },
   business: { label:"Business", limit:600, price:"£14.99", period:"month", desc:"600 scans / month" },
