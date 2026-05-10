@@ -741,6 +741,17 @@ function generatePDF(result, userEmail) {
 }
 
 /* ─── RESULT ─── */
+function SummaryToggle({ summary }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="result-section" style={{ padding:"0.7rem 1.4rem" }}>
+      <button onClick={() => setOpen(o => !o)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--gold)", fontFamily:"'DM Mono',monospace", textDecoration:"underline", textUnderlineOffset:3, padding:0 }}>
+        {open ? "Hide summary ↑" : "Read full summary ↓"}
+      </button>
+      {open && <p className="summary-text" style={{ marginTop:8 }}>{summary}</p>}
+    </div>
+  );
+}
 function Result({ result, onReset, onScanAnother, userEmail, gold }) {
   const [showConf,setShowConf]=useState(false);
   const vLabel={ auth:"Highly Likely Authentic", counter:"Characteristics Match Known Counterfeits", inc:"Inconclusive — Professional Review Advised" };
@@ -775,22 +786,19 @@ function Result({ result, onReset, onScanAnother, userEmail, gold }) {
             {result.verdict==="counter"&&<div className="fake-id-notice" style={{ marginTop:6 }}>⚠ Card ID may be less reliable on suspected counterfeits.</div>}
           </div>
         )}
-        {/* Condition + Value */}
+      {/* Condition + Value */}
         {(result.condition||result.estimatedValue)&&(
-          <div className="result-section">
-            <div className="sec-hdg">Condition &amp; Value</div>
-            <div style={{ display:"flex",gap:10,flexWrap:"wrap",alignItems:"center" }}>
+          <div className="result-section" style={{ padding:"0.7rem 1.4rem" }}>
+            <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
               {result.condition&&condInfo&&<div className="condition-badge" style={{ borderColor:condInfo.colour+"44",color:condInfo.colour }}><div className="cond-dot" style={{ background:condInfo.colour }}/><span style={{ fontSize:13,fontWeight:500 }}>{result.condition}</span><span style={{ fontSize:11,opacity:.7 }}>({condInfo.short})</span></div>}
               {result.estimatedValue&&result.estimatedValue!=="Unable to estimate"&&<div className="value-badge">💰 {result.estimatedValue}</div>}
             </div>
-            {result.condition&&condInfo&&<p style={{ fontSize:12,color:"var(--text3)",marginTop:8 }}>{condInfo.desc}</p>}
           </div>
         )}
-        {/* Summary */}
-        {result.summary&&<div className="result-section"><p className="summary-text">{result.summary}</p></div>}
-        {/* Flags */}
+        {/* Flags — straight after condition */}
         {result.flags.length>0&&<div className="result-section"><div className="sec-hdg">Detailed Analysis Breakdown</div>{result.flags.map((f,i)=><div key={i} className="flag"><div className={`flag-pip pip-${f.type}`}/><p className="flag-txt">{f.text}</p></div>)}</div>}
-      </div>
+        {/* Summary — collapsed at bottom */}
+        {result.summary&&<SummaryToggle summary={result.summary}/>}
       <div className="result-actions">
         <button className="btn btn-gold btn-sm" onClick={onScanAnother}>+ Scan another</button>
         <button className="btn btn-ghost btn-sm" onClick={onReset}>Full reset</button>
