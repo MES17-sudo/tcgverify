@@ -107,7 +107,7 @@ function toBase64(f) {
   return new Promise((res,rej) => { const r=new FileReader(); r.onload=e=>res({ base64:e.target.result.split(",")[1], mediaType:f.type, preview:e.target.result }); r.onerror=()=>rej(); r.readAsDataURL(f); });
 }
 function parseField(text, field) {
-  const m = text.match(new RegExp(`${field}:\\s*(.+?)(?=\\n[A-Z_]+:|$)`,"is"));
+  const m = text.match(new RegExp(`${field}:\\s*([^\\n]+)`, "i"));
   return m ? sanitise(m[1].trim()) : "";
 }
 function parseVerdict(t) { const u=t.toUpperCase(); if(u.includes("HIGHLY LIKELY AUTHENTIC")) return "auth"; if(u.includes("CHARACTERISTICS MATCH")) return "counter"; return "inc"; }
