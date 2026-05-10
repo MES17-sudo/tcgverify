@@ -799,6 +799,7 @@ function Result({ result, onReset, onScanAnother, userEmail, gold }) {
         {result.flags.length>0&&<div className="result-section"><div className="sec-hdg">Detailed Analysis Breakdown</div>{result.flags.map((f,i)=><div key={i} className="flag"><div className={`flag-pip pip-${f.type}`}/><p className="flag-txt">{f.text}</p></div>)}</div>}
         {/* Summary — collapsed at bottom */}
         {result.summary&&<SummaryToggle summary={result.summary}/>}
+		</div>
       <div className="result-actions">
         <button className="btn btn-gold btn-sm" onClick={onScanAnother}>+ Scan another</button>
         <button className="btn btn-ghost btn-sm" onClick={onReset}>Full reset</button>
