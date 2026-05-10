@@ -763,16 +763,16 @@ function Result({ result, onReset, onScanAnother, userEmail, gold }) {
         </div>
       </div>
       <div className="result-body">
-        {/* Card ID */}
+        {/* Card ID — single line */}
         {(result.cardName||result.cardSet||result.cardRarity)&&(
-          <div className="result-section">
-            <div className="sec-hdg">Card Identification</div>
-            <div className="card-info-grid">
-              {result.cardName&&<div className="card-info-item"><div className="ci-label">Card Name</div><div className="ci-value">{result.cardName}</div>{cardIdConf&&<div className="ci-conf" style={{ color:cardIdColour }}>{cardIdConf} confidence ID</div>}</div>}
-              {result.cardSet&&<div className="card-info-item"><div className="ci-label">Set</div><div className="ci-value">{result.cardSet}</div></div>}
-              {result.cardRarity&&<div className="card-info-item"><div className="ci-label">Rarity</div><div className="ci-value">{result.cardRarity}</div></div>}
+          <div className="result-section" style={{ padding:"0.7rem 1.4rem" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+              {result.cardName&&<span style={{ fontSize:13, fontWeight:500, color:"var(--text)" }}>{result.cardName}</span>}
+              {result.cardSet&&<><span style={{ color:"var(--text4)" }}>·</span><span style={{ fontSize:12, color:"var(--text3)" }}>{result.cardSet}</span></>}
+              {result.cardRarity&&<><span style={{ color:"var(--text4)" }}>·</span><span style={{ fontSize:12, color:"var(--text3)" }}>{result.cardRarity}</span></>}
+              {cardIdConf&&<span style={{ fontSize:10, color:cardIdColour, fontFamily:"'DM Mono',monospace", marginLeft:4 }}>({cardIdConf})</span>}
             </div>
-            {result.verdict==="counter"&&<div className="fake-id-notice">⚠ Card identification may be less reliable on suspected counterfeits — print distortion can affect accuracy. Identification is based on artwork and layout, not print quality.</div>}
+            {result.verdict==="counter"&&<div className="fake-id-notice" style={{ marginTop:6 }}>⚠ Card ID may be less reliable on suspected counterfeits.</div>}
           </div>
         )}
         {/* Condition + Value */}
