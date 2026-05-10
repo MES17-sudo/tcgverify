@@ -809,7 +809,7 @@ function Result({ result, onReset, onScanAnother, userEmail, gold }) {
     </div>
   );
 }
-
+}
 /* ─── REFERRAL BOX ─── */
 function ReferralBox({ userId }) {
   const code=getReferralCode(userId);
