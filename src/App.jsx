@@ -1192,10 +1192,11 @@ export default function App() {
     try {
       // Step 1: Gemini identifies the card
       let cardInfo=null;
-      if(GEMINI_API_KEY) {
-        cardInfo=await identifyCardWithGemini(frontImg.base64, frontImg.mediaType);
-      }
-
+	console.log("Gemini key available:", !!GEMINI_API_KEY);
+	if(GEMINI_API_KEY) {
+	cardInfo=await identifyCardWithGemini(frontImg.base64, frontImg.mediaType);
+	console.log("Gemini result:", cardInfo);
+	}
       // Step 2: Claude authenticates with card context
       const systemPrompt=buildSystemPrompt(cardInfo);
       const content=[
