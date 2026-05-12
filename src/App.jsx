@@ -96,12 +96,13 @@ async function identifyCardWithGemini(base64Image, mediaType) {
         contents: [{
           parts: [
             { inline_data: { mime_type: mediaType, data: base64Image } },
-            { text: `Identify this trading card precisely. Respond in this exact format only:
-CARD: [exact card name]
-SET: [set name]
-RARITY: [rarity]
-GAME: [Pokemon / Magic: The Gathering / Yu-Gi-Oh! / Other]
-If you cannot identify it with confidence write "Unable to identify" for that field.` }
+           { text: `You are a trading card expert. Identify this card precisely. Respond in this EXACT format only with no other text:
+			CARD: [exact card name including any suffixes like V, VMAX, EX, GX]
+			SET: [full set name e.g. Brilliant Stars, Scarlet & Violet, Base Set]
+			NUMBER: [card number e.g. 018/172]
+			RARITY: [rarity e.g. Common, Rare, Secret Rare, Full Art]
+			GAME: [Pokemon / Magic: The Gathering / Yu-Gi-Oh! / One Piece / Other]
+			If you cannot identify a field with confidence write "Unknown" for that field only.` }
           ]
         }],
         generationConfig: { maxOutputTokens: 100, temperature: 0.1 }
@@ -111,10 +112,11 @@ If you cannot identify it with confidence write "Unable to identify" for that fi
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const parseG = field => { const m = text.match(new RegExp(`${field}:\\s*([^\\n]+)`, "i")); return m ? sanitise(m[1].trim()) : ""; };
     return {
-      cardName: parseG("CARD"),
-      cardSet:  parseG("SET"),
+      cardName:   parseG("CARD"),
+      cardSet:    parseG("SET"),
+      cardNumber: parseG("NUMBER"),
       cardRarity: parseG("RARITY"),
-      cardGame: parseG("GAME"),
+      cardGame:   parseG("GAME"),
     };
   } catch { return null; }
 }
@@ -863,9 +865,10 @@ function Result({ result, onScanAnother, onReset, userEmail }) {
           <div className="result-section" style={{ padding:"0.8rem 1.5rem" }}>
             <div className="card-id-line">
               <span className="card-id-name">{result.cardName}</span>
-              {result.cardSet&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardSet}</span></>}
-              {result.cardRarity&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardRarity}</span></>}
-              {result.cardGame&&<span className="card-id-game">{result.cardGame}</span>}
+				{result.cardSet&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardSet}</span></>}
+				{result.cardNumber&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardNumber}</span></>}
+				{result.cardRarity&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardRarity}</span></>}
+				{result.cardGame&&<span className="card-id-game">{result.cardGame}</span>}
             </div>
             {result.verdict==="counter"&&<div className="fake-id-notice">⚠ Card name is based on artwork — less reliable on suspected counterfeits.</div>}
           </div>
