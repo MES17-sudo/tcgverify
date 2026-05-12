@@ -692,7 +692,7 @@ function AuthGate({ onSignIn, onMagicLink, loading, magicSent, theme, onToggle, 
 /* ─── CAMERA HOOK ─── */
 function useCam(vRef) {
   const [on,setOn]=useState(false);
-  const start=useCallback(async()=>{ try{ const s=await navigator.mediaDevices.getUserMedia({ video:{facingMode:"environment"}, audio:false }); vRef.current.srcObject=s; vRef.current.play(); setOn(true); }catch{ alert("Camera unavailable — please use the upload option instead."); } },[vRef]);
+  const start=useCallback(async()=>{ try{ const s=await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment", width:{ ideal:1920 }, height:{ ideal:2560 }, focusMode:"continuous" }, audio:false }); vRef.current.srcObject=s; vRef.current.play(); setOn(true); }catch{ alert("Camera unavailable — please use the upload option instead."); } },[vRef]);
   const stop=useCallback(()=>{ vRef.current?.srcObject?.getTracks().forEach(t=>t.stop()); if(vRef.current) vRef.current.srcObject=null; setOn(false); },[vRef]);
   const capture=useCallback(()=>{ const c=document.createElement("canvas"); c.width=vRef.current.videoWidth; c.height=vRef.current.videoHeight; c.getContext("2d").drawImage(vRef.current,0,0); return c.toDataURL("image/jpeg",.92); },[vRef]);
   return { on, start, stop, capture };
