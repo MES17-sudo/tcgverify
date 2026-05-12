@@ -38,7 +38,7 @@ const STRIPE_LINKS = {
 
 /* ─── TIERS ─── */
 const TIERS = {
-  free:     { label:"Free",     limit:3,   price:null,     period:null },
+  free:     { label:"Free",     limit:50,   price:null,     period:null },
   starter:  { label:"Starter",  limit:50,  price:"£3.99",  period:"month" },
   pro:      { label:"Pro",      limit:200, price:"£7.99",  period:"month" },
   business: { label:"Business", limit:600, price:"£14.99", period:"month" },
