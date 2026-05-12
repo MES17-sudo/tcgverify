@@ -94,15 +94,17 @@ async function identifyCardWithGemini(base64Image, mediaType) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{
-          parts: [
-            { inline_data: { mime_type: mediaType, data: base64Image } },
-           { text: `You are a trading card expert. Identify this card precisely. Respond in this EXACT format only with no other text:
-			CARD: [exact card name including any suffixes like V, VMAX, EX, GX]
-			SET: [full set name e.g. Brilliant Stars, Scarlet & Violet, Base Set]
-			NUMBER: [card number e.g. 018/172]
-			RARITY: [rarity e.g. Common, Rare, Secret Rare, Full Art]
-			GAME: [Pokemon / Magic: The Gathering / Yu-Gi-Oh! / One Piece / Other]
-			If you cannot identify a field with confidence write "Unknown" for that field only.` }
+		parts: [
+		{ text: `You are a trading card expert. Identify this card precisely. Respond in this EXACT format only with no other text:
+		CARD: [exact card name including any suffixes like V, VMAX, EX, GX]
+		SET: [full set name e.g. Brilliant Stars, Scarlet & Violet, Base Set]
+		NUMBER: [card number e.g. 018/172]
+		RARITY: [rarity e.g. Common, Rare, Secret Rare, Full Art]
+		GAME: [Pokemon / Magic: The Gathering / Yu-Gi-Oh! / One Piece / Other]
+		If you cannot identify a field write "Unknown" for that field only.` },
+    { inline_data: { mime_type: mediaType, data: base64Image } },
+  ]
+}],
           ]
         }],
         generationConfig: { maxOutputTokens: 100, temperature: 0.1 }
