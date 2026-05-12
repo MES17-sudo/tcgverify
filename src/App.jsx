@@ -87,6 +87,7 @@ function getReferralCode(userId) { return userId?.slice(0,8).toUpperCase() || ""
 /* ─── GEMINI CARD IDENTIFICATION ─── */
 async function identifyCardWithGemini(base64Image, mediaType) {
   if (!GEMINI_API_KEY) return null;
+	console.log("Gemini key:", GEMINI_API_KEY ? "present" : "missing");
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
