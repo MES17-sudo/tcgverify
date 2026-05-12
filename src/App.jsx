@@ -109,8 +109,9 @@ async function identifyCardWithGemini(base64Image, mediaType) {
       })
     });
     const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-	console.log("Gemini raw response:", text);
+   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+	console.log("Gemini raw response:", JSON.stringify(text));
+	console.log("Gemini full data:", JSON.stringify(data.candidates?.[0]?.content));
     const parseG = field => { const m = text.match(new RegExp(`${field}:\\s*([^\\n]+)`, "i")); return m ? sanitise(m[1].trim()) : ""; };
     return {
       cardName:   parseG("CARD"),
