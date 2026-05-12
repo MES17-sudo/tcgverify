@@ -1,7 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-//  TCGVerify v6
+//  TCGVerify v7
 // ═══════════════════════════════════════════════════════════════
-//  New in v6:
+//  New in v7:
+//  - Fixed Gemini image passing (text prompt first, then image)
+//  - Updated to gemini-2.0-flash model
+//  - Added card number to identification
+//  - Removed all debug logs
+//  - All v6 fixes carried forward
+//  New in v6 (carried forward):
 //  - Google Gemini API for accurate card identification
 //  - Claude handles authentication only (more accurate)
 //  - Smooth 0-100% progress bar (no step numbers)
@@ -38,7 +44,7 @@ const STRIPE_LINKS = {
 
 /* ─── TIERS ─── */
 const TIERS = {
-  free:     { label:"Free",     limit:50,   price:null,     period:null },
+  free:     { label:"Free",     limit:3,   price:null,     period:null },
   starter:  { label:"Starter",  limit:50,  price:"£3.99",  period:"month" },
   pro:      { label:"Pro",      limit:200, price:"£7.99",  period:"month" },
   business: { label:"Business", limit:600, price:"£14.99", period:"month" },
@@ -87,34 +93,37 @@ function getReferralCode(userId) { return userId?.slice(0,8).toUpperCase() || ""
 /* ─── GEMINI CARD IDENTIFICATION ─── */
 async function identifyCardWithGemini(base64Image, mediaType) {
   if (!GEMINI_API_KEY) return null;
-	console.log("Gemini key:", GEMINI_API_KEY ? "present" : "missing");
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const prompt = `You are a trading card expert. Look at this card image and identify it precisely.
+Respond in this EXACT format with no extra text, markdown, or explanation:
+CARD: [exact card name including V, VMAX, EX, GX, etc]
+SET: [full set name e.g. Brilliant Stars, Base Set, Scarlet and Violet]
+NUMBER: [card number e.g. 025/172]
+RARITY: [rarity e.g. Common, Rare Holo, Secret Rare, Full Art]
+GAME: [Pokemon / Magic The Gathering / Yu-Gi-Oh / One Piece / Other]
+Write Unknown for any field you cannot identify with confidence.`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{
-		parts: [
-		{ text: `You are a trading card expert. Identify this card precisely. Respond in this EXACT format only with no other text:
-		CARD: [exact card name including any suffixes like V, VMAX, EX, GX]
-		SET: [full set name e.g. Brilliant Stars, Scarlet & Violet, Base Set]
-		NUMBER: [card number e.g. 018/172]
-		RARITY: [rarity e.g. Common, Rare, Secret Rare, Full Art]
-		GAME: [Pokemon / Magic: The Gathering / Yu-Gi-Oh! / One Piece / Other]
-		If you cannot identify a field write "Unknown" for that field only.` },
-    { inline_data: { mime_type: mediaType, data: base64Image } },
-  ]
-}],
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mediaType, data: base64Image } }
           ]
         }],
-        generationConfig: { maxOutputTokens: 100, temperature: 0.1 }
+        generationConfig: { maxOutputTokens: 150, temperature: 0.1 }
       })
     });
     const data = await res.json();
-   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-	console.log("Gemini raw response:", JSON.stringify(text));
-	console.log("Gemini full data:", JSON.stringify(data.candidates?.[0]?.content));
-    const parseG = field => { const m = text.match(new RegExp(`${field}:\\s*([^\\n]+)`, "i")); return m ? sanitise(m[1].trim()) : ""; };
+    if (data.error) { console.warn("Gemini error:", data.error.message); return null; }
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const parseG = field => {
+      const m = text.match(new RegExp(`^${field}:\s*(.+)$`, "im"));
+      const val = m ? sanitise(m[1].trim()) : "";
+      return val === "Unknown" ? "" : val;
+    };
     return {
       cardName:   parseG("CARD"),
       cardSet:    parseG("SET"),
@@ -122,7 +131,7 @@ async function identifyCardWithGemini(base64Image, mediaType) {
       cardRarity: parseG("RARITY"),
       cardGame:   parseG("GAME"),
     };
-  } catch { return null; }
+  } catch(e) { console.warn("Gemini failed:", e.message); return null; }
 }
 
 /* ─── CLAUDE AUTHENTICATION SYSTEM PROMPT ─── */
@@ -699,7 +708,7 @@ function AuthGate({ onSignIn, onMagicLink, loading, magicSent, theme, onToggle, 
 /* ─── CAMERA HOOK ─── */
 function useCam(vRef) {
   const [on,setOn]=useState(false);
-  const start=useCallback(async()=>{ try{ const s=await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment", width:{ ideal:1920 }, height:{ ideal:2560 }, focusMode:"continuous" }, audio:false }); vRef.current.srcObject=s; vRef.current.play(); setOn(true); }catch{ alert("Camera unavailable — please use the upload option instead."); } },[vRef]);
+  const start=useCallback(async()=>{ try{ const s=await navigator.mediaDevices.getUserMedia({ video:{facingMode:"environment"}, audio:false }); vRef.current.srcObject=s; vRef.current.play(); setOn(true); }catch{ alert("Camera unavailable — please use the upload option instead."); } },[vRef]);
   const stop=useCallback(()=>{ vRef.current?.srcObject?.getTracks().forEach(t=>t.stop()); if(vRef.current) vRef.current.srcObject=null; setOn(false); },[vRef]);
   const capture=useCallback(()=>{ const c=document.createElement("canvas"); c.width=vRef.current.videoWidth; c.height=vRef.current.videoHeight; c.getContext("2d").drawImage(vRef.current,0,0); return c.toDataURL("image/jpeg",.92); },[vRef]);
   return { on, start, stop, capture };
@@ -869,10 +878,10 @@ function Result({ result, onScanAnother, onReset, userEmail }) {
           <div className="result-section" style={{ padding:"0.8rem 1.5rem" }}>
             <div className="card-id-line">
               <span className="card-id-name">{result.cardName}</span>
-				{result.cardSet&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardSet}</span></>}
-				{result.cardNumber&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardNumber}</span></>}
-				{result.cardRarity&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardRarity}</span></>}
-				{result.cardGame&&<span className="card-id-game">{result.cardGame}</span>}
+              {result.cardSet&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardSet}</span></>}
+              {result.cardNumber&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardNumber}</span></>}
+              {result.cardRarity&&<><span className="card-id-sep">·</span><span className="card-id-meta">{result.cardRarity}</span></>}
+              {result.cardGame&&<span className="card-id-game">{result.cardGame}</span>}
             </div>
             {result.verdict==="counter"&&<div className="fake-id-notice">⚠ Card name is based on artwork — less reliable on suspected counterfeits.</div>}
           </div>
@@ -1199,11 +1208,10 @@ export default function App() {
     try {
       // Step 1: Gemini identifies the card
       let cardInfo=null;
-	console.log("Gemini key available:", !!GEMINI_API_KEY);
-	if(GEMINI_API_KEY) {
-	cardInfo=await identifyCardWithGemini(frontImg.base64, frontImg.mediaType);
-	console.log("Gemini result:", cardInfo);
-	}
+      if(GEMINI_API_KEY) {
+        cardInfo=await identifyCardWithGemini(frontImg.base64, frontImg.mediaType);
+      }
+
       // Step 2: Claude authenticates with card context
       const systemPrompt=buildSystemPrompt(cardInfo);
       const content=[
@@ -1231,8 +1239,9 @@ export default function App() {
       const r={
         verdict,
         confidence:    parseConf(text),
-        cardName:      cardInfo?.cardName||"Unable to identify",
+        cardName:      cardInfo?.cardName||"",
         cardSet:       cardInfo?.cardSet||"",
+        cardNumber:    cardInfo?.cardNumber||"",
         cardRarity:    cardInfo?.cardRarity||"",
         cardGame:      cardInfo?.cardGame||"",
         condition:     parseField(text,"CONDITION"),
@@ -1242,7 +1251,7 @@ export default function App() {
       };
 
       /* save to Supabase */
-      await supabase.from("scans").insert({ user_id:user.id, verdict:r.verdict, confidence:r.confidence, card_name:r.cardName!=="Unable to identify"?r.cardName:null, card_set:r.cardSet||null, card_rarity:r.cardRarity||null, condition_grade:r.condition||null, estimated_value:r.estimatedValue||null, summary:r.summary||null });
+      await supabase.from("scans").insert({ user_id:user.id, verdict:r.verdict, confidence:r.confidence, card_name:r.cardName||null, card_set:r.cardSet||null, card_rarity:r.cardRarity||null, condition_grade:r.condition||null, estimated_value:r.estimatedValue||null, summary:r.summary||null });
       const newCount=scanCount+1;
       await supabase.from("profiles").update({scan_count:newCount}).eq("id",user.id);
       setProfile(p=>({...p,scan_count:newCount}));
